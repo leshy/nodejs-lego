@@ -15,5 +15,12 @@
   "bugs": {
     "url": "https://github.com/leshy/pluggy/issues"
   },
-  "homepage": "https://github.com/leshy/pluggy"
+  "homepage": "https://github.com/leshy/pluggy",
+  "dependencies": {
+    "async": "^0.9.0",
+      "underscore": "^1.8.1",
+      "helpers": "git://github.com/leshy/nodejs-helpers.git",
+      "backbone4000": "git://github.com/leshy/backbone4000.git"
+
+  }
 }
