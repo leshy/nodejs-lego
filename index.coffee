@@ -1,30 +1,43 @@
+path = require 'path'
 backbone = require 'backbone4000'
 _ = require 'underscore'
-helpers = require 'helpers'
+helpers = h = require 'helpers'
+fs = require 'fs'
+async = require 'async'
 
-plugin = exports.plugin = backbone.Model.extend4000 {}
+lego = exports.lego = backbone.Model.extend4000
+    initialize: (options) ->
+        @env = options.env
+        
 
-loadPlugins = (options={}, callback) ->
+exports.loadLegos = (options={}, callback) ->
 
     options = _.extend {
-        dir: helpers.path(__dirname + 'node_modules')
-        PluginClass: backbone.Model
+        dir: helpers.path(path.dirname(require.main.filename) + 'node_modules')
+        LegoClass: backbone.Model
+        prefix: 'lego_'
+        env: {}
     }, options
 
+    env = options.env
+    
     fs.readdir options.dir, (err, files) ->
         if err then return helpers.cbc err
-        plugins = {}
+        env.legos = legos = {}
         
         _.each files, (fileName) ->
-            [ fileName,
-            (callback) ->
-                if fileName.indexOf(prefix) isnt 0 then return callback()
-                filePath = helpers.path(__dirname + settings.pluginDir + fileName)
-                stats = fs.lstatSync filePath
+            if fileName.indexOf(options.prefix) isnt 0 then return
 
-                if stats.isDirectory() or stats.isSymbolicLink()
-                    name = fileName.substr prefix.length
-                    newPlugin = options.PluginClass.extend4000 { name: name, env: env }, require(filePath).plugin
-                    newPlugin::settings = _.extend  {}, newPlugin::settings or {}, settings.plugin[name]
+            filePath = helpers.path(options.dir, fileName)
+            stats = fs.lstatSync filePath
+            if stats.isDirectory() or stats.isSymbolicLink()
+                name = fileName.substr(options.prefix.length)
+                newLego = options.LegoClass.extend4000 { name: name, env: env }, require(filePath).lego
+                newLego::settings = _.extend {}, newLego::settings or {}, env.settings.module?[name] or {}
+                legos[name] = new newLego env: env
 
-                    plugins[fileName] = newPlugin
+        autoInit = helpers.dictMap legos, (lego,name) ->
+            h.push h.array(lego.requires), (callback) ->
+                lego.init (err,data) -> callback err,data
+                
+        async.auto autoInit, callback
