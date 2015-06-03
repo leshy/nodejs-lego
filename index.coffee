@@ -22,7 +22,7 @@ exports.loadLegos = (options={}, callback) ->
 
     fs.readdir options.dir, (err, files) ->
         if err then return helpers.cbc err
-        env.legos = legos = {}
+        env.legos = env.modules = legos = {}
 
         _.each files, (fileName) ->
             if fileName.indexOf(options.prefix) isnt 0 then return

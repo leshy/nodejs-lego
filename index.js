@@ -37,7 +37,7 @@
       if (err) {
         return helpers.cbc(err);
       }
-      env.legos = legos = {};
+      env.legos = env.modules = legos = {};
       _.each(files, function(fileName) {
         var filePath, name, newLego, stats, _ref;
         if (fileName.indexOf(options.prefix) !== 0) {
