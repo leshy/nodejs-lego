@@ -21,7 +21,7 @@ exports.loadLegos = (options={}, callback) ->
     env = options.env
 
     fs.readdir options.dir, (err, files) ->
-        if err then return helpers.cbc err
+        if err then return helpers.cbc callback, err
         env.legos = env.modules = legos = {}
 
         _.each files, (fileName) ->
