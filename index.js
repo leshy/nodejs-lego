@@ -16,7 +16,8 @@
 
   lego = exports.lego = backbone.Model.extend4000({
     initialize: function(options) {
-      return this.env = options.env;
+      this.env = options.env;
+      return this.legos = options.legos;
     }
   });
 
@@ -27,31 +28,39 @@
     }
     options = _.extend({
       dir: helpers.path(path.dirname(require.main.filename) + 'node_modules'),
-      LegoClass: backbone.Model,
+      legoClass: backbone.Model,
       prefix: 'lego_',
       env: {}
     }, options);
     env = options.env;
+    console.log('reading dir', options.dir);
     return fs.readdir(options.dir, function(err, files) {
       var autoInit, legos;
       if (err) {
         return helpers.cbc(callback, err);
       }
-      env.legos = env.modules = legos = {};
+      legos = {};
       _.each(files, function(fileName) {
-        var filePath, name, newLego, ref, stats;
-        if (fileName.indexOf(options.prefix) !== 0) {
+        var filePath, name, newLego, ref, ref1, stats;
+        if (options.prefix && fileName.indexOf(options.prefix) !== 0) {
           return;
         }
         filePath = helpers.path(options.dir, fileName);
         stats = fs.lstatSync(filePath);
         if (stats.isDirectory() || stats.isSymbolicLink()) {
           name = fileName.substr(options.prefix.length);
-          newLego = options.LegoClass.extend4000({
-            name: name,
-            env: env
-          }, require(filePath).lego);
-          newLego.prototype.settings = _.extend({}, newLego.prototype.settings || {}, ((ref = env.settings.module) != null ? ref[name] : void 0) || {});
+          console.log('loading module', fileName);
+          if (options.legoClass) {
+            newLego = options.legoClass.extend4000({
+              name: name,
+              env: env,
+              legos: legos
+            }, require(filePath).lego);
+            newLego.prototype.settings = _.extend({}, newLego.prototype.settings || {}, ((ref = env.settings.module) != null ? ref[name] : void 0) || {});
+          } else {
+            newLego = require(filePath);
+            newLego.settings = _.extend({}, newLego.settings || {}, ((ref1 = env.settings.module) != null ? ref1[name] : void 0) || {});
+          }
           return legos[name] = new newLego({
             env: env
           });
@@ -77,7 +86,9 @@
           });
         });
       });
-      return async.auto(autoInit, callback);
+      return async.auto(autoInit, function(err, data) {
+        return callback(err, legos);
+      });
     });
   };
 

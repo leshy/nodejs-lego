@@ -8,33 +8,42 @@ async = require 'async'
 lego = exports.lego = backbone.Model.extend4000
     initialize: (options) ->
         @env = options.env
-
+        @legos = options.legos
 exports.loadLegos = (options={}, callback) ->
 
     options = _.extend {
         dir: helpers.path(path.dirname(require.main.filename) + 'node_modules')
-        LegoClass: backbone.Model
+        legoClass: backbone.Model
         prefix: 'lego_'
         env: {}
     }, options
 
     env = options.env
 
+    console.log 'reading dir',options.dir
     fs.readdir options.dir, (err, files) ->
         if err then return helpers.cbc callback, err
-        env.legos = env.modules = legos = {}
+        legos = {}
 
         _.each files, (fileName) ->
-            if fileName.indexOf(options.prefix) isnt 0 then return
+            if options.prefix and fileName.indexOf(options.prefix) isnt 0 then return
 
             filePath = helpers.path(options.dir, fileName)
             stats = fs.lstatSync filePath
             if stats.isDirectory() or stats.isSymbolicLink()
                 name = fileName.substr(options.prefix.length)
-                newLego = options.LegoClass.extend4000 { name: name, env: env }, require(filePath).lego
-                newLego::settings = _.extend {}, newLego::settings or {}, env.settings.module?[name] or {}
-                legos[name] = new newLego env: env
+                console.log 'loading module', fileName
 
+                # class based legos?
+                if options.legoClass
+                  newLego = options.legoClass.extend4000 { name: name, env: env, legos: legos }, require(filePath).lego
+                  newLego::settings = _.extend {}, newLego::settings or {}, env.settings.module?[name] or {}
+                else
+                # function based legos?
+                  newLego = require(filePath)
+                  newLego.settings = _.extend {}, newLego.settings or {}, env.settings.module?[name] or {}
+
+                legos[name] = new newLego env: env
 
         h.dictMap legos, (lego,name) ->
             h.map h.array(lego.after), (targetName) ->
@@ -45,9 +54,9 @@ exports.loadLegos = (options={}, callback) ->
                 if targetLego = legos[targetName]
                     targetLego.requires = h.push h.array(targetLego.requires), name
 
-
         autoInit = h.dictMap legos, (lego,name) ->
             h.push h.array(lego.requires), (callback) ->
                 lego.init (err,data) -> callback err,data
 
-        async.auto autoInit, callback
+        async.auto autoInit, (err,data) ->
+          callback err, legos
