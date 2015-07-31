@@ -33,7 +33,9 @@
       env: {}
     }, options);
     env = options.env;
-    console.log('reading dir', options.dir);
+    if (options.verboseInit) {
+      console.log('reading dir', options.dir);
+    }
     return fs.readdir(options.dir, function(err, files) {
       var autoInit, legos;
       if (err) {
@@ -41,7 +43,7 @@
       }
       legos = {};
       _.each(files, function(fileName) {
-        var filePath, name, newLego, ref, ref1, stats;
+        var filePath, name, newLego, ref, requireData, stats;
         if (options.prefix && fileName.indexOf(options.prefix) !== 0) {
           return;
         }
@@ -49,18 +51,19 @@
         stats = fs.lstatSync(filePath);
         if (stats.isDirectory() || stats.isSymbolicLink()) {
           name = fileName.substr(options.prefix.length);
-          console.log('loading module', fileName);
-          if (options.legoClass) {
-            newLego = options.legoClass.extend4000({
-              name: name,
-              env: env,
-              legos: legos
-            }, require(filePath).lego);
-            newLego.prototype.settings = _.extend({}, newLego.prototype.settings || {}, ((ref = env.settings.module) != null ? ref[name] : void 0) || {});
-          } else {
-            newLego = require(filePath);
-            newLego.settings = _.extend({}, newLego.settings || {}, ((ref1 = env.settings.module) != null ? ref1[name] : void 0) || {});
+          if (options.verboseInit) {
+            console.log('loading module', fileName);
           }
+          requireData = require(filePath);
+          if (requireData.lego) {
+            requireData = requireData.lego;
+          }
+          newLego = options.legoClass.extend4000({
+            name: name,
+            env: env,
+            legos: legos
+          }, requireData);
+          newLego.prototype.settings = _.extend({}, newLego.prototype.settings || {}, ((ref = env.settings.module) != null ? ref[name] : void 0) || {});
           return legos[name] = new newLego({
             env: env
           });

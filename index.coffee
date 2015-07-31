@@ -9,6 +9,7 @@ lego = exports.lego = backbone.Model.extend4000
     initialize: (options) ->
         @env = options.env
         @legos = options.legos
+
 exports.loadLegos = (options={}, callback) ->
 
     options = _.extend {
@@ -20,7 +21,8 @@ exports.loadLegos = (options={}, callback) ->
 
     env = options.env
 
-    console.log 'reading dir',options.dir
+    if options.verboseInit then console.log 'reading dir',options.dir
+
     fs.readdir options.dir, (err, files) ->
         if err then return helpers.cbc callback, err
         legos = {}
@@ -32,16 +34,13 @@ exports.loadLegos = (options={}, callback) ->
             stats = fs.lstatSync filePath
             if stats.isDirectory() or stats.isSymbolicLink()
                 name = fileName.substr(options.prefix.length)
-                console.log 'loading module', fileName
+                if options.verboseInit then console.log 'loading module', fileName
 
-                # class based legos?
-                if options.legoClass
-                  newLego = options.legoClass.extend4000 { name: name, env: env, legos: legos }, require(filePath).lego
-                  newLego::settings = _.extend {}, newLego::settings or {}, env.settings.module?[name] or {}
-                else
-                # function based legos?
-                  newLego = require(filePath)
-                  newLego.settings = _.extend {}, newLego.settings or {}, env.settings.module?[name] or {}
+                requireData = require(filePath)
+                if requireData.lego then requireData = requireData.lego
+
+                newLego = options.legoClass.extend4000 { name: name, env: env, legos: legos }, requireData
+                newLego::settings = _.extend {}, newLego::settings or {}, env.settings.module?[name] or {}
 
                 legos[name] = new newLego env: env
 
