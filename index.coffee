@@ -55,7 +55,7 @@ exports.loadLegos = (options={}, callback) ->
 
         autoInit = h.dictMap legos, (lego,name) ->
             h.push h.array(lego.requires), (callback) ->
-                lego.init (err,data) -> callback err,data
+                lego.init (err,data) -> callback err, data
 
         async.auto autoInit, (err,data) ->
           callback err, legos
