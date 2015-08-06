@@ -34,7 +34,7 @@ exports.loadLegos = (options={}, callback) ->
             stats = fs.lstatSync filePath
             if stats.isDirectory() or stats.isSymbolicLink()
                 name = fileName.substr(options.prefix.length)
-                if options.verboseInit then console.log 'loading module', fileName
+                if options.verbose then console.log 'loading module', fileName
 
                 requireData = require(filePath)
                 if requireData.lego then requireData = requireData.lego

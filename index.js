@@ -51,7 +51,7 @@
         stats = fs.lstatSync(filePath);
         if (stats.isDirectory() || stats.isSymbolicLink()) {
           name = fileName.substr(options.prefix.length);
-          if (options.verboseInit) {
+          if (options.verbose) {
             console.log('loading module', fileName);
           }
           requireData = require(filePath);
