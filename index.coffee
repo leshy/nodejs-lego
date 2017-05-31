@@ -1,3 +1,5 @@
+# autocompile
+
 path = require 'path'
 backbone = require 'backbone4000'
 _ = require 'underscore'
@@ -11,7 +13,6 @@ lego = exports.lego = backbone.Model.extend4000
         @legos = options.legos
 
 exports.loadLegos = (options={}, callback) ->
-
     options = _.extend {
         dir: helpers.path(path.dirname(require.main.filename) + 'node_modules')
         legoClass: backbone.Model
@@ -21,24 +22,25 @@ exports.loadLegos = (options={}, callback) ->
 
     env = options.env
 
-    if options.verboseInit then console.log 'reading dir',options.dir
+    if options.verbose then console.log 'reading dir',options.dir
 
-    files = fs.readdirsync options.dir
+    files = fs.readdirSync options.dir
     legos = {}
-
     _.each files, (fileName) ->
+
         if options.prefix and fileName.indexOf(options.prefix) isnt 0 then return
 
-        filePath = helpers.path(options.dir, fileName)
+        filePath = path.join options.dir, fileName
         stats = fs.lstatSync filePath
+
         if stats.isDirectory() or stats.isSymbolicLink()
             name = fileName.substr(options.prefix.length)
             if options.verbose then console.log 'loading module', fileName
 
             requireData = require(filePath)
-            if requireData.lego then requireData = requireData.lego
 
-            newLego = options.legoClass.extend4000 { name: name, env: env, legos: legos }, requireData
+            if requireData.lego then requireData = requireData.lego
+            newLego = requireData.extend4000  { name: name, env: env, legos: legos }
             newLego::settings = _.extend {}, newLego::settings or {}, env.settings.module?[name] or {}
 
             legos[name] = new newLego env: env
@@ -54,7 +56,8 @@ exports.loadLegos = (options={}, callback) ->
 
     autoInit = h.dictMap legos, (lego,name) ->
         h.push h.array(lego.requires), (callback) ->
-            lego.init (err,data) -> callback err, data
+            lego.init (err,data) ->
+              if options.verbose then console.log 'module ready', name
+              callback err, data
 
-    async.auto autoInit, (err,data) ->
-      callback err, legos
+    async.auto autoInit, (err,data) -> callback err, legos

@@ -22,7 +22,7 @@
   });
 
   exports.loadLegos = function(options, callback) {
-    var env;
+    var autoInit, env, files, legos;
     if (options == null) {
       options = {};
     }
@@ -33,65 +33,63 @@
       env: {}
     }, options);
     env = options.env;
-    if (options.verboseInit) {
+    if (options.verbose) {
       console.log('reading dir', options.dir);
     }
-    return fs.readdir(options.dir, function(err, files) {
-      var autoInit, legos;
-      if (err) {
-        return helpers.cbc(callback, err);
+    files = fs.readdirSync(options.dir);
+    legos = {};
+    _.each(files, function(fileName) {
+      var filePath, name, newLego, ref, requireData, stats;
+      if (options.prefix && fileName.indexOf(options.prefix) !== 0) {
+        return;
       }
-      legos = {};
-      _.each(files, function(fileName) {
-        var filePath, name, newLego, ref, requireData, stats;
-        if (options.prefix && fileName.indexOf(options.prefix) !== 0) {
-          return;
+      filePath = path.join(options.dir, fileName);
+      stats = fs.lstatSync(filePath);
+      if (stats.isDirectory() || stats.isSymbolicLink()) {
+        name = fileName.substr(options.prefix.length);
+        if (options.verbose) {
+          console.log('loading module', fileName);
         }
-        filePath = helpers.path(options.dir, fileName);
-        stats = fs.lstatSync(filePath);
-        if (stats.isDirectory() || stats.isSymbolicLink()) {
-          name = fileName.substr(options.prefix.length);
+        requireData = require(filePath);
+        if (requireData.lego) {
+          requireData = requireData.lego;
+        }
+        newLego = requireData.extend4000({
+          name: name,
+          env: env,
+          legos: legos
+        });
+        newLego.prototype.settings = _.extend({}, newLego.prototype.settings || {}, ((ref = env.settings.module) != null ? ref[name] : void 0) || {});
+        return legos[name] = new newLego({
+          env: env
+        });
+      }
+    });
+    h.dictMap(legos, function(lego, name) {
+      h.map(h.array(lego.after), function(targetName) {
+        if (legos[targetName]) {
+          return lego.requires = h.push(h.array(lego.requires), targetName);
+        }
+      });
+      return h.map(h.array(lego.before), function(targetName) {
+        var targetLego;
+        if (targetLego = legos[targetName]) {
+          return targetLego.requires = h.push(h.array(targetLego.requires), name);
+        }
+      });
+    });
+    autoInit = h.dictMap(legos, function(lego, name) {
+      return h.push(h.array(lego.requires), function(callback) {
+        return lego.init(function(err, data) {
           if (options.verbose) {
-            console.log('loading module', fileName);
+            console.log('module ready', name);
           }
-          requireData = require(filePath);
-          if (requireData.lego) {
-            requireData = requireData.lego;
-          }
-          newLego = options.legoClass.extend4000({
-            name: name,
-            env: env,
-            legos: legos
-          }, requireData);
-          newLego.prototype.settings = _.extend({}, newLego.prototype.settings || {}, ((ref = env.settings.module) != null ? ref[name] : void 0) || {});
-          return legos[name] = new newLego({
-            env: env
-          });
-        }
-      });
-      h.dictMap(legos, function(lego, name) {
-        h.map(h.array(lego.after), function(targetName) {
-          if (legos[targetName]) {
-            return lego.requires = h.push(h.array(lego.requires), targetName);
-          }
-        });
-        return h.map(h.array(lego.before), function(targetName) {
-          var targetLego;
-          if (targetLego = legos[targetName]) {
-            return targetLego.requires = h.push(h.array(targetLego.requires), name);
-          }
+          return callback(err, data);
         });
       });
-      autoInit = h.dictMap(legos, function(lego, name) {
-        return h.push(h.array(lego.requires), function(callback) {
-          return lego.init(function(err, data) {
-            return callback(err, data);
-          });
-        });
-      });
-      return async.auto(autoInit, function(err, data) {
-        return callback(err, legos);
-      });
+    });
+    return async.auto(autoInit, function(err, data) {
+      return callback(err, legos);
     });
   };
 
