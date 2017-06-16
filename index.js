@@ -22,12 +22,14 @@
   });
 
   exports.loadLegos = function(options, callback) {
-    var autoInit, env, files, legos;
+    var autoInit, env, files, legos, rootCandidates, rootDir;
     if (options == null) {
       options = {};
     }
+    rootCandidates = [path.join(path.dirname(require.main.filename), 'node_modules'), path.join(process.cwd(), 'node_modules')];
+    rootDir = _.find(rootCandidates, fs.existsSync);
     options = _.extend({
-      dir: helpers.path(path.dirname(require.main.filename) + 'node_modules'),
+      dir: rootDir,
       legoClass: backbone.Model,
       prefix: 'lego_',
       env: {}

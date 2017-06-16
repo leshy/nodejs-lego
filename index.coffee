@@ -13,8 +13,15 @@ lego = exports.lego = backbone.Model.extend4000
         @legos = options.legos
 
 exports.loadLegos = (options={}, callback) ->
+
+    rootCandidates = [
+      path.join(path.dirname(require.main.filename), 'node_modules'),
+      path.join(process.cwd(), 'node_modules')]
+
+    rootDir = _.find rootCandidates, fs.existsSync
+
     options = _.extend {
-        dir: helpers.path(path.dirname(require.main.filename) + 'node_modules')
+        dir: rootDir
         legoClass: backbone.Model
         prefix: 'lego_'
         env: {}
