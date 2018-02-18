@@ -67,5 +67,4 @@ exports.loadLegos = (options={}, callback) ->
               if options.verbose then console.log 'module ready', name
               callback err, data
 
-    console.log "AUTOINIT", autoInit
     async.auto autoInit, (err,data) -> callback err, legos

@@ -93,7 +93,6 @@
         });
       });
     });
-    console.log("AUTOINIT", autoInit);
     return async.auto(autoInit, function(err, data) {
       return callback(err, legos);
     });
