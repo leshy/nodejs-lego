@@ -61,9 +61,11 @@ exports.loadLegos = (options={}, callback) ->
                 targetLego.requires = h.push h.array(targetLego.requires), name
 
     autoInit = h.dictMap legos, (lego,name) ->
-        h.push h.array(lego.requires), (callback) ->
+        h.push h.array(lego.requires), (results, callback) ->
+            if not callback then callback = results
             lego.init (err,data) ->
               if options.verbose then console.log 'module ready', name
               callback err, data
 
+    console.log "AUTOINIT", autoInit
     async.auto autoInit, (err,data) -> callback err, legos

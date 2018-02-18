@@ -81,7 +81,10 @@
       });
     });
     autoInit = h.dictMap(legos, function(lego, name) {
-      return h.push(h.array(lego.requires), function(callback) {
+      return h.push(h.array(lego.requires), function(results, callback) {
+        if (!callback) {
+          callback = results;
+        }
         return lego.init(function(err, data) {
           if (options.verbose) {
             console.log('module ready', name);
@@ -90,6 +93,7 @@
         });
       });
     });
+    console.log("AUTOINIT", autoInit);
     return async.auto(autoInit, function(err, data) {
       return callback(err, legos);
     });
