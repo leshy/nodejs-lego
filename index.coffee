@@ -1,5 +1,4 @@
 # autocompile
-
 path = require 'path'
 backbone = require 'backbone4000'
 _ = require 'underscore'
