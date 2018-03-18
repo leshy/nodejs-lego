@@ -18,9 +18,9 @@
   "homepage": "https://github.com/leshy/pluggy",
   "dependencies": {
     "async": "^2.6.0",
-    "backbone4000": "git://github.com/leshy/backbone4000.git",
+    "backbone4000": "git+https://github.com/leshy/backbone4000.git",
     "colors": "^1.1.2",
-    "helpers": "git://github.com/leshy/nodejs-helpers.git",
+    "helpers": "git+https://github.com/leshy/nodejs-helpers.git",
     "underscore": "^1.8.3"
   }
 }
