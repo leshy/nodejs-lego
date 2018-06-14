@@ -62,7 +62,7 @@
           legos: legos
         });
         newLego.prototype.settings = _.extend({}, newLego.prototype.settings || {}, ((ref = env.settings.module) != null ? ref[name] : void 0) || {});
-        return legos[name] = new newLego({
+        return env[name] = legos[name] = new newLego({
           env: env
         });
       }

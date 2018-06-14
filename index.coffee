@@ -32,6 +32,7 @@ exports.loadLegos = (options={}, callback) ->
 
     files = fs.readdirSync options.dir
     legos = {}
+
     _.each files, (fileName) ->
 
         if options.prefix and fileName.indexOf(options.prefix) isnt 0 then return
@@ -49,7 +50,7 @@ exports.loadLegos = (options={}, callback) ->
             newLego = requireData.extend4000  { name: name, env: env, legos: legos }
             newLego::settings = _.extend {}, newLego::settings or {}, env.settings.module?[name] or {}
 
-            legos[name] = new newLego env: env
+            env[name] = legos[name] = new newLego env: env
 
     h.dictMap legos, (lego,name) ->
         h.map h.array(lego.after), (targetName) ->
